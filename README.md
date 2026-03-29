@@ -20,6 +20,37 @@
 
 ## 📂 Struktura projektu
 
+```mermaid
+flowchart TD
+    subgraph Frontend ["Frontend (React / Vite)"]
+        UI[Uživatelské rozhraní]
+        Fetch[HTTP Fetch / Axios]
+    end
+
+    subgraph Backend ["Backend (Spring Boot)"]
+        Controller["REST Controller<br>Přijímá HTTP požadavky"]
+        Service["Service<br>Byznys logika"]
+        Repository["JPA Repository<br>Komunikace s DB"]
+        Entity["Entity<br>Datové modely"]
+    end
+
+    subgraph Database ["Databáze (PostgreSQL)"]
+        DB[(Cloud SQL Databáze)]
+    end
+
+    UI -->|Kliknutí / Formulář| Fetch
+    Fetch -- "Požadavek (JSON)" --> Controller
+    Controller --> Service
+    Service --> Repository
+    Repository -. "Používá" .-> Entity
+    Repository -- "SQL dotazy (Hibernate)" --> DB
+    DB -- "Výsledky dotazu" --> Repository
+    Repository --> Service
+    Service --> Controller
+    Controller -- "Odpověď (JSON)" --> Fetch
+    Fetch -->|Překreslení| UI
+```
+
 ```
 src/
 └── main/
@@ -39,8 +70,38 @@ src/
 
 ## 🗄️ Datový model
 
-```
-User ──< Recipe ──< RecipeIngredient >── Ingredient
+```mermaid
+erDiagram
+    USER ||--o{ RECIPE : "vytváří"
+    RECIPE ||--|{ RECIPE_INGREDIENT : "obsahuje"
+    INGREDIENT ||--o{ RECIPE_INGREDIENT : "je součástí"
+
+    USER {
+        Long id PK
+        String username
+        String passwordHash
+        String email
+    }
+
+    RECIPE {
+        Long id PK
+        String title
+        String instructions
+        Long author_id FK
+    }
+
+    INGREDIENT {
+        Long id PK
+        String name
+    }
+
+    RECIPE_INGREDIENT {
+        Long id PK
+        Double amount
+        String unit
+        Long recipe_id FK
+        Long ingredient_id FK
+    }
 ```
 
 | Entita            | Popis                                              |
@@ -110,6 +171,6 @@ Aplikace poběží na `http://localhost:8080`.
 
 ---
 
-## 👤 Autor
+## 👥 Autoři
 
-Jakub Vaca — školní projekt, Ostravská univerzita (`cz.osu`)
+Jakub Vaca & Radim Bednář — školní projekt, Ostravská univerzita (`cz.osu`)
