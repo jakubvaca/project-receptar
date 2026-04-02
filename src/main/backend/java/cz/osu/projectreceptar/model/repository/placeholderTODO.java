@@ -1,6 +1,6 @@
-package cz.osu.projectreceptar.model;
+package cz.osu.projectreceptar.model.repository;
 
-public class placeholder {
+public class placeholderTODO {
 
     /*
     TODO: Udelat databazi, vytvorit entity pro recepty, ingredience, uzivatele, atd. a nastavit vztahy mezi nimi. Navrh na stranky neon.com? -  digitalocean? - MS azure? - v github student packu credity
@@ -11,6 +11,11 @@ public class placeholder {
         udelat pres vime react ts/node appku!
         mby nejake fotky jidel?
         mby nejake API na jidla / ingredience look
+
+
+
+
+        TODO: u repository udelat logiku a a udelat dalsi dtos
      */
 
 
