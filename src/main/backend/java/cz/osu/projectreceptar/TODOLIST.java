@@ -1,6 +1,6 @@
-package cz.osu.projectreceptar.model.repository;
+package cz.osu.projectreceptar;
 
-public class placeholderTODO {
+public class TODOLIST {
 
     /*
     TODO: Udelat databazi, vytvorit entity pro recepty, ingredience, uzivatele, atd. a nastavit vztahy mezi nimi. Navrh na stranky neon.com? -  digitalocean? - MS azure? - v github student packu credity
