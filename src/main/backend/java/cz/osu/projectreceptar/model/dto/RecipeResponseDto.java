@@ -1,13 +1,13 @@
 package cz.osu.projectreceptar.model.dto;
 
 import lombok.Data;
-
 import java.util.List;
 
 @Data
-public class RecipeCreateDto {
+public class RecipeResponseDto {
+    private Long id;
     private String title;
     private String instructions;
-    private Long authorId;
+    private String authorName;
     private List<IngredientDto> ingredients;
 }
