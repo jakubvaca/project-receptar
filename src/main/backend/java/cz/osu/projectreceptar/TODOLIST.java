@@ -12,6 +12,8 @@ public class TODOLIST {
         mby nejake fotky jidel?
         mby nejake API na jidla / ingredience look
         
+        12.4.26 update:
+
         PRIDAT UZIVATELE !
         PRIDAT HASHOVANI HESLA !
         PRIDAT AUTORIZACI A REGISTRACI UZIVATELE !
