@@ -1,0 +1,16 @@
+TODO:
+
+        PRIDAT UZIVATELE ! -done radim
+
+        PRIDAT HASHOVANI HESLA ! - done radim
+
+        PRIDAT AUTORIZACI A REGISTRACI UZIVATELE ! -tbd
+
+        PRIDAT CAS PRIPRAVY, VARU, CELKOVEHO CASU A PORCE DO RECEPTU !
+
+        TEORETICKY PRIDAT MOZNOST PRIDAT FOTKU K RECEPTU (NEBO JEN URL) !
+
+        DATABAZE PRES NEON.COM - HOTOVO
+
+        TODO: u repository udelat logiku a a udelat dalsi dtos - HOTOVO 
+   
