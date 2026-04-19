@@ -2,6 +2,8 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import RecipeList from './pages/RecipeList';
 import RecipeForm from './pages/RecipeForm';
+import Login from './pages/Login';
+import Register from './pages/Register'; // <-- Přidaný import registrace
 
 function App() {
   return (
@@ -15,6 +17,8 @@ function App() {
           <Routes>
             <Route path="/" element={<RecipeList />} />
             <Route path="/create" element={<RecipeForm />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} /> {/* <-- Nová cesta pro registraci */}
           </Routes>
         </main>
       </div>
