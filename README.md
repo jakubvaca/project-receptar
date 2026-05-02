@@ -279,8 +279,8 @@ Base URL: `http://localhost:8080`
   - [x] Recipe list page
   - [x] Recipe creation form
   - [x] Navigation bar
-- [ ] User registration and login
-- [ ] Password hashing
+- [x] User registration and login
+- [x] Password hashing
 - [ ] JWT / session-based authentication & authorization
 - [ ] Extended recipe fields (prep time, cook time, servings)
 - [ ] Recipe photo support (upload or URL)
