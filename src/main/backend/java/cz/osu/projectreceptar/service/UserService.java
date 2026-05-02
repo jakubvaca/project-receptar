@@ -5,7 +5,7 @@ import cz.osu.projectreceptar.model.dto.LoginRequestDto;
 import cz.osu.projectreceptar.model.entity.User;
 import cz.osu.projectreceptar.model.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder; // Import pro šifrování
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -15,7 +15,7 @@ import java.util.Optional;
 public class UserService {
 
     private final UserRepository userRepository;
-    private final BCryptPasswordEncoder encoder; // Tohle si Spring sám "přitáhne" ze SecurityConfigu
+    private final BCryptPasswordEncoder encoder; // Přitaženo ze SecurityConfigu
 
     public AuthResponseDto login(LoginRequestDto request) {
         Optional<User> userOptional = userRepository.findByUsername(request.getUsername());
@@ -26,7 +26,7 @@ public class UserService {
 
         User user = userOptional.get();
 
-        // TADY JE TA ZMĚNA: Porovnáváme heslo z formuláře se zašifrovaným heslem v DB
+        // Porovnáváme heslo z formuláře se zašifrovaným heslem v DB
         if (!encoder.matches(request.getPassword(), user.getPasswordHash())) {
             throw new RuntimeException("Špatné heslo!");
         }
@@ -34,11 +34,18 @@ public class UserService {
         return new AuthResponseDto(user.getId(), user.getUsername(), "Přihlášení úspěšné");
     }
 
-    // Metoda pro registraci nového uživatele
     public AuthResponseDto register(User user) {
-        // Zašifrujeme heslo dřív, než ho uložíme do databáze
+        // 1. Kontrola, jestli už uživatel s tímto jménem neexistuje
+        if (userRepository.findByUsername(user.getUsername()).isPresent()) {
+            throw new RuntimeException("Uživatelské jméno je již obsazené!");
+        }
+
+        // 2. Zašifrujeme heslo dřív, než ho uložíme do databáze
         user.setPasswordHash(encoder.encode(user.getPasswordHash()));
+
+        // 3. Uložení do H2 in-memory databáze
         User savedUser = userRepository.save(user);
+
         return new AuthResponseDto(savedUser.getId(), savedUser.getUsername(), "Registrace byla úspěšná");
     }
 }
