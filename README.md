@@ -331,7 +331,7 @@ Base URL: `http://localhost:8080`
   - [x] Navigation bar
 - [x] User registration and login
 - [x] Password hashing
-- [ ] JWT / session-based authentication & authorization
+- [x] JWT / session-based authentication & authorization
 - [ ] Extended recipe fields (prep time, cook time, servings)
 - [ ] Recipe photo support (upload or URL)
 
