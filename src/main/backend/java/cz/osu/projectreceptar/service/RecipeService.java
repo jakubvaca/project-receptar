@@ -13,6 +13,8 @@ import cz.osu.projectreceptar.model.repository.RecipeRepository;
 import cz.osu.projectreceptar.model.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -29,18 +31,18 @@ public class RecipeService {
     @Transactional
     public Recipe createRecipe(RecipeCreateDto dto) {
 
-        // Najdeme autora (nyní máme v DB uživatele s ID 1, kterého jsi vytvořil)
         User author = userRepository.findById(dto.getAuthorId())
-                .orElseThrow(() -> new RuntimeException("Autor nebyl nalezen"));
+                .orElseThrow(() -> new RuntimeException("Autor s ID " + dto.getAuthorId() + " nebyl nalezen."));
 
-        // Vytvoříme a uložíme základní recept
+        // 2. Vytvoříme a uložíme základní recept
         Recipe newRecipe = new Recipe();
         newRecipe.setTitle(dto.getTitle());
         newRecipe.setInstructions(dto.getInstructions());
-        newRecipe.setAuthor(author);
+        newRecipe.setAuthor(author); // Tady už proměnnou 'author' máme k dispozici
+
         Recipe savedRecipe = recipeRepository.save(newRecipe);
 
-        // Zpracujeme suroviny
+        // 3. Zpracujeme suroviny
         for (IngredientDto ingDto : dto.getIngredients()) {
             // Najdeme surovinu v DB podle jména, pokud neexistuje, vytvoříme ji
             Ingredient ingredient = ingredientRepository.findByNameIgnoreCase(ingDto.getName())

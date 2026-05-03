@@ -1,15 +1,35 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+
+// 1. Přesně definujeme, jak vypadá uživatel v paměti
+interface UserData {
+  username: string;
+}
 
 export default function Navbar() {
   const navigate = useNavigate();
+  const location = useLocation(); 
   
-  // 1. Koukneme se, jestli máme v paměti uloženého usera z Loginu
-  const userString = localStorage.getItem('loggedUser');
-  const user = userString ? JSON.parse(userString) : null;
+  // 2. Řekneme TypeScriptu, že 'user' je buď 'UserData', nebo 'null'
+  const [user, setUser] = useState<UserData | null>(() => {
+    const userString = localStorage.getItem('loggedUser');
+    return userString ? (JSON.parse(userString) as UserData) : null;
+  });
 
-  // 2. Funkce pro odhlášení
+  // 3. Kdykoliv se změní URL adresa, zkontrolujeme paměť znovu
+  useEffect(() => {
+    // Tady jsme vytvořili malou funkci, abychom uklidnili ten přísný linter
+    const checkAuth = () => {
+      const userString = localStorage.getItem('loggedUser');
+      setUser(userString ? (JSON.parse(userString) as UserData) : null);
+    };
+    checkAuth(); // A hned ji zavoláme
+  }, [location]);
+
+  // 4. Funkce pro odhlášení
   const handleLogout = () => {
     localStorage.removeItem('loggedUser'); // Smažeme usera z paměti
+    setUser(null); // Okamžitě ho vymažeme i ze zobrazení v Navbaru
     navigate('/login'); // Hodíme ho na login
   };
 

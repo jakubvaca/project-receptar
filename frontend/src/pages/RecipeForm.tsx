@@ -2,66 +2,92 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 export default function RecipeForm() {
-  const navigate = useNavigate(); // presmerovani po uspesnem odeslani receptu
+  const navigate = useNavigate();
 
-  // base stavy
+  // Základní stavy
   const [title, setTitle] = useState('');
   const [instructions, setInstructions] = useState('');
   
-  // dynam pole
+  // Dynamické pole pro suroviny
   const [ingredients, setIngredients] = useState([
     { name: '', amount: 0, unit: '' }
   ]);
 
-  // stav po poslani
+  // Stavy pro odesílání a chyby
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // novy radek ingredience
+  // Přidání nového řádku pro surovinu
   const handleAddIngredient = () => {
     setIngredients([...ingredients, { name: '', amount: 0, unit: '' }]);
   };
 
-  // smazani ingredience podle indexu (ktery se posila z buttonu)
+  // Smazání suroviny podle indexu
   const handleRemoveIngredient = (indexToRemove: number) => {
     setIngredients(ingredients.filter((_, index) => index !== indexToRemove));
   };
 
-  // zapis zmeny do pole ingredienci (ktery se posila z inputu)
+  // Zápis změny do pole surovin
   const handleIngredientChange = (index: number, field: string, value: string | number) => {
     const newIngredients = [...ingredients];
     newIngredients[index] = { ...newIngredients[index], [field]: value };
     setIngredients(newIngredients);
   };
 
-  // odeslani formulaer
+  // Odeslání formuláře
   const handleSubmit = (e: React.SyntheticEvent) => {
-    e.preventDefault(); // zabraneni refreshi stranky
+    e.preventDefault();
     setIsSubmitting(true);
     setError(null);
 
-    // podle recipedto struktury
+    // 1. Získání dat uživatele (hlavně userId) z localStorage
+    const userStorage = localStorage.getItem('loggedUser'); 
+    let authorId = null;
+
+    if (userStorage) {
+      try {
+        const parsedUser = JSON.parse(userStorage);
+        authorId = parsedUser.userId || null;
+      } catch (err) {
+        console.error("Chyba při parsování dat z localStorage", err);
+      }
+    }
+
+    if (!authorId) {
+      setError("Nejste přihlášen, nebo chybí ID uživatele. Přihlaste se prosím znovu.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    // 2. Příprava dat podle struktury backendového DTO
     const recipeData = {
       title: title,
       instructions: instructions,
-      authorId: 1, // TODO: AZ SE PRIDAJI UZIVATELE NAHRADIT !!
+      authorId: authorId, 
       ingredients: ingredients.map(ing => ({
         name: ing.name,
-        amount: Number(ing.amount), // pro jistotu prevedeni na cislo
+        amount: Number(ing.amount), // pro jistotu převedení na číslo
         unit: ing.unit
       }))
     };
 
+    // 3. Odeslání na server
     fetch('http://localhost:8080/api/recipes', {
       method: 'POST',
+      credentials: 'include', // Velmi důležité pro odeslání přihlašovací Cookie
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify(recipeData),
     })
       .then((response) => {
-        if (!response.ok) throw new Error('Chyba při ukládání receptu.');
-        // 201 - OK prsmerovani na hlavni stranku
+        if (!response.ok) {
+            if (response.status === 401 || response.status === 403) {
+                throw new Error('Nemáte oprávnění přidat recept. Vaše přihlášení pravděpodobně vypršelo.');
+            }
+            throw new Error('Chyba při ukládání receptu na server.');
+        }
+        // 201 Created - přesměrování na hlavní stránku
         navigate('/'); 
       })
       .catch((err) => {
@@ -78,7 +104,7 @@ export default function RecipeForm() {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         
-        {/* Recept nazev */}
+        {/* Název receptu */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Název receptu</label>
           <input 
@@ -91,7 +117,7 @@ export default function RecipeForm() {
           />
         </div>
 
-        {/* ingredience */}
+        {/* Suroviny */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Suroviny</label>
           {ingredients.map((ingredient, index) => (
@@ -122,7 +148,7 @@ export default function RecipeForm() {
                 onChange={(e) => handleIngredientChange(index, 'unit', e.target.value)}
                 className="flex-1 border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-orange-500 outline-none w-24"
               />
-              {/* kdyz je vic nez 1 radek ukazeme button na mazani ingredience */}
+              {/* Pokud je více než 1 řádek, ukážeme tlačítko na smazání suroviny */}
               {ingredients.length > 1 && (
                 <button 
                   type="button" 
@@ -157,7 +183,7 @@ export default function RecipeForm() {
           />
         </div>
 
-        {/* Button na odeslani */}
+        {/* Tlačítko na odeslání */}
         <button 
           type="submit" 
           disabled={isSubmitting}
