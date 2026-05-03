@@ -10,6 +10,7 @@
 |------------|-------------------------------------------------------|
 | Backend    | Java 25, Spring Boot 4.0.5, Spring Web MVC            |
 | Database   | PostgreSQL ([Neon.tech](https://neon.tech/)) + Spring Data JPA + Hibernate |
+| Security   | Spring Security, BCrypt password hashing              |
 | Validation | Spring Validation                                     |
 | Build      | Maven (Maven Wrapper included)                        |
 | Utilities  | Lombok, Spring Boot DevTools                          |
@@ -27,10 +28,12 @@ project-receptar/
 ├── frontend/                        # React + Vite frontend application
 │   ├── src/
 │   │   ├── components/
-│   │   │   └── Navbar.tsx           # Navigation bar
+│   │   │   └── Navbar.tsx           # Navigation bar (auth-aware: login/logout/user display)
 │   │   ├── pages/
 │   │   │   ├── RecipeList.tsx       # Homepage — lists all recipes
-│   │   │   └── RecipeForm.tsx       # Form to create a new recipe
+│   │   │   ├── RecipeForm.tsx       # Form to create a new recipe
+│   │   │   ├── Login.tsx            # Login page
+│   │   │   └── Register.tsx         # Registration page
 │   │   ├── types/
 │   │   │   └── index.ts             # Shared TypeScript types
 │   │   └── App.tsx                  # Route definitions
@@ -41,14 +44,18 @@ project-receptar/
         ├── backend/java/cz/osu/projectreceptar/
         │   ├── ProjectReceptarApplication.java     # Application entry point
         │   ├── config/
-        │   │   └── CorsConfig.java                 # CORS configuration
+        │   │   ├── CorsConfig.java                 # CORS configuration
+        │   │   └── SecurityConfig.java             # Spring Security (BCrypt, CSRF, filter chain)
         │   ├── controller/
-        │   │   └── RecipeController.java            # REST endpoints
+        │   │   ├── RecipeController.java            # Recipe REST endpoints
+        │   │   └── AuthController.java              # Auth REST endpoints (login, register)
         │   ├── model/
         │   │   ├── dto/
         │   │   │   ├── IngredientDto.java
         │   │   │   ├── RecipeCreateDto.java
-        │   │   │   └── RecipeResponseDto.java
+        │   │   │   ├── RecipeResponseDto.java
+        │   │   │   ├── LoginRequestDto.java
+        │   │   │   └── AuthResponseDto.java
         │   │   ├── entity/
         │   │   │   ├── User.java
         │   │   │   ├── Recipe.java
@@ -60,7 +67,8 @@ project-receptar/
         │   │       ├── IngredientRepository.java
         │   │       └── RecipeIngredientRepository.java
         │   └── service/
-        │       └── RecipeService.java               # Business logic
+        │       ├── RecipeService.java               # Recipe business logic
+        │       └── UserService.java                 # User business logic (register, login)
         └── resources/
             └── application.yaml                     # Application configuration
 ```
@@ -229,6 +237,8 @@ npm run lint     # Run ESLint
 
 Base URL: `http://localhost:8080`
 
+### Recipes
+
 | Method | Endpoint        | Description                   | Request Body         |
 |--------|-----------------|-------------------------------|----------------------|
 | `GET`  | `/api/recipes`  | Retrieve all recipes          | —                    |
@@ -263,6 +273,46 @@ Base URL: `http://localhost:8080`
     ]
   }
 ]
+```
+
+### Authentication
+
+| Method | Endpoint              | Description              | Request Body        |
+|--------|-----------------------|--------------------------|---------------------|
+| `POST` | `/api/auth/register`  | Register a new user      | `User` (JSON)       |
+| `POST` | `/api/auth/login`     | Log in an existing user  | `LoginRequestDto`   |
+
+### `POST /api/auth/register` — Request body example
+
+> **Note:** Despite the field name, `passwordHash` should contain the plaintext password. The backend hashes it with BCrypt before storing.
+
+```json
+{
+  "username": "jakub",
+  "email": "jakub@example.com",
+  "passwordHash": "mypassword123"
+}
+```
+
+### `POST /api/auth/login` — Request body example
+
+```json
+{
+  "username": "jakub",
+  "password": "mypassword123"
+}
+```
+
+### Auth endpoints — Response example (`AuthResponseDto`)
+
+> **Note:** The `message` field is returned in Czech (e.g. `"Přihlášení úspěšné"` = "Login successful", `"Registrace byla úspěšná"` = "Registration successful").
+
+```json
+{
+  "userId": 1,
+  "username": "jakub",
+  "message": "Přihlášení úspěšné"
+}
 ```
 
 ---
