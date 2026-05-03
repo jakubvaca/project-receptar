@@ -19,18 +19,19 @@ const Login = () => {
       const response = await fetch('http://localhost:8080/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        // Backend v LoginRequestDto očekává username a password
         body: JSON.stringify({ username, password }),
       });
 
       if (response.ok) {
-        const data = await response.json(); // Backend vrací AuthResponseDto
+        // Backend nám vrací AuthResponseDto (kde je id, username a message)
+        const data = await response.json(); 
+        
         setSuccessMsg('Přihlášení úspěšné! Vítej zpět.');
         
-        // Uložíme si jméno uživatele do paměti prohlížeče
-        localStorage.setItem('currentUser', data.username);
+        // ULOŽENÍ PRO NAVBAR: Uložíme to jako JSON text pod klíčem 'loggedUser'
+        localStorage.setItem('loggedUser', JSON.stringify({ username: data.username }));
         
-        // Za vteřinu ho hodíme na hlavní stránku s recepty
+        // Za vteřinu ho přesměrujeme na hlavní stránku
         setTimeout(() => {
           navigate('/');
         }, 1000);
@@ -49,12 +50,14 @@ const Login = () => {
       <form onSubmit={handleLogin} className="p-10 bg-white shadow-2xl rounded-3xl w-96 border border-slate-100">
         <h2 className="text-3xl font-extrabold mb-8 text-slate-800">Přihlášení</h2>
         
+        {/* Chybová hláška */}
         {errorMsg && (
           <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-xl text-sm border border-red-200">
             {errorMsg}
           </div>
         )}
 
+        {/* Úspěšná hláška */}
         {successMsg && (
           <div className="mb-4 p-3 bg-green-100 text-green-700 rounded-xl text-sm border border-green-200">
             {successMsg}
@@ -75,6 +78,7 @@ const Login = () => {
           onChange={e => setPassword(e.target.value)} 
           required 
         />
+        
         <button className="w-full bg-slate-800 text-white p-4 rounded-xl font-bold text-lg hover:bg-slate-900 transition shadow-lg shadow-slate-200 mb-4">
           Přihlásit se
         </button>
