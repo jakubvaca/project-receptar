@@ -34,7 +34,7 @@ const Register = () => {
       });
 
       if (response.ok) {
-        setSuccessMsg('Registrace pecka! Za chvíli tě přesměrujeme...');
+        setSuccessMsg('Registrace se zdařila.');
         
         setTimeout(() => {
           navigate('/login');
