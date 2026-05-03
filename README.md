@@ -284,6 +284,8 @@ Base URL: `http://localhost:8080`
 
 ### `POST /api/auth/register` — Request body example
 
+> **Note:** Despite the field name, `passwordHash` should contain the plaintext password. The backend hashes it with BCrypt before storing.
+
 ```json
 {
   "username": "jakub",
@@ -302,6 +304,8 @@ Base URL: `http://localhost:8080`
 ```
 
 ### Auth endpoints — Response example (`AuthResponseDto`)
+
+> **Note:** The `message` field is returned in Czech (e.g. `"Přihlášení úspěšné"` = "Login successful", `"Registrace byla úspěšná"` = "Registration successful").
 
 ```json
 {
