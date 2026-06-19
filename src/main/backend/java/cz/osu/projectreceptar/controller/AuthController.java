@@ -29,10 +29,10 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody User user) {
+    public ResponseEntity<?> register(@RequestBody User user, HttpServletRequest request, HttpServletResponse response) {
         try {
-            AuthResponseDto response = userService.register(user);
-            return ResponseEntity.ok(response);
+            AuthResponseDto authResponse = userService.register(user, request, response);
+            return ResponseEntity.ok(authResponse);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }

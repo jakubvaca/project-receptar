@@ -15,7 +15,8 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
-import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
+import org.springframework.security.web.csrf.CsrfFilter;
 import org.springframework.security.config.Customizer;
 
 @Configuration
@@ -43,13 +44,18 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        // Tento handler zachová plain token z cookie jako kompatibilní se SPA, neshifruje jej.
+        CsrfTokenRequestAttributeHandler requestHandler = new CsrfTokenRequestAttributeHandler();
+        requestHandler.setCsrfRequestAttributeName("_csrf");
+
         http
             .cors(Customizer.withDefaults()) // Zapne CORS konfiguraci ze Spring MVC i na úrovni Spring Security
             .csrf(csrf -> csrf
                 .ignoringRequestMatchers("/api/auth/login", "/api/auth/register") // Ignorujeme CSRF u přihlášení a registrace
                 .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                .csrfTokenRequestHandler(requestHandler)
             )
-            .addFilterAfter(new CsrfCookieFilter(), BasicAuthenticationFilter.class)
+            .addFilterAfter(new CsrfCookieFilter(), CsrfFilter.class)
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/recipes").permitAll()
