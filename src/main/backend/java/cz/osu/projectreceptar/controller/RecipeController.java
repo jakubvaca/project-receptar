@@ -4,6 +4,7 @@ import cz.osu.projectreceptar.model.dto.RecipeCreateDto;
 import cz.osu.projectreceptar.model.dto.RecipeResponseDto;
 import cz.osu.projectreceptar.model.entity.Recipe;
 import cz.osu.projectreceptar.service.RecipeService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +21,7 @@ public class RecipeController {
     private final RecipeService recipeService;
 
     @PostMapping
-    public ResponseEntity<String> createRecipe(@RequestBody RecipeCreateDto dto) {
+    public ResponseEntity<String> createRecipe(@Valid @RequestBody RecipeCreateDto dto) {
         Recipe recipe = recipeService.createRecipe(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body("Recept vytvoren jeho ID je: " + recipe.getId());
     }

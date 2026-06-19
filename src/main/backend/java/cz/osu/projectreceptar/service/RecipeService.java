@@ -11,7 +11,7 @@ import cz.osu.projectreceptar.model.repository.IngredientRepository;
 import cz.osu.projectreceptar.model.repository.RecipeIngredientRepository;
 import cz.osu.projectreceptar.model.repository.RecipeRepository;
 import cz.osu.projectreceptar.model.repository.UserRepository;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -30,9 +30,11 @@ public class RecipeService {
 
     @Transactional
     public Recipe createRecipe(RecipeCreateDto dto) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = authentication.getName();
 
-        User author = userRepository.findById(dto.getAuthorId())
-                .orElseThrow(() -> new RuntimeException("Autor s ID " + dto.getAuthorId() + " nebyl nalezen."));
+        User author = userRepository.findByUsername(currentUsername)
+                .orElseThrow(() -> new RuntimeException("Přihlášený uživatel nebyl nalezen v databázi."));
 
         // 2. Vytvoříme a uložíme základní recept
         Recipe newRecipe = new Recipe();
@@ -64,8 +66,9 @@ public class RecipeService {
         return savedRecipe;
     }
 
+        @Transactional(readOnly = true)
         public List<RecipeResponseDto> getAllRecipes(){
-            List<Recipe> recipes = recipeRepository.findAll();
+            List<Recipe> recipes = recipeRepository.findAllWithDetails();
 
             return recipes.stream().map(recipe -> {
                 RecipeResponseDto dto = new RecipeResponseDto();
