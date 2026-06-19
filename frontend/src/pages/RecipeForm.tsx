@@ -60,10 +60,10 @@ export default function RecipeForm() {
     }
 
     // 2. Příprava dat podle struktury backendového DTO
+    // Odebíráme authorId, to si vyřeší backend sám ze session (SecurityContext)
     const recipeData = {
       title: title,
       instructions: instructions,
-      authorId: authorId, 
       ingredients: ingredients.map(ing => ({
         name: ing.name,
         amount: Number(ing.amount), // pro jistotu převedení na číslo
@@ -71,13 +71,27 @@ export default function RecipeForm() {
       }))
     };
 
-    // 3. Odeslání na server
+    // 3. Získání CSRF tokenu z cookies
+    const getCsrfToken = () => {
+      const match = document.cookie.match(new RegExp('(^| )XSRF-TOKEN=([^;]+)'));
+      return match ? match[2] : null;
+    };
+
+    const csrfToken = getCsrfToken();
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json'
+    };
+
+    // Přidáme CSRF token do hlaviček, pokud existuje
+    if (csrfToken) {
+      headers['X-XSRF-TOKEN'] = csrfToken;
+    }
+
+    // 4. Odeslání na server
     fetch('http://localhost:8080/api/recipes', {
       method: 'POST',
-      credentials: 'include', // Velmi důležité pro odeslání přihlašovací Cookie
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      credentials: 'include', // Velmi důležité pro odeslání přihlašovací Cookie a čtení CSRF Cookie
+      headers: headers,
       body: JSON.stringify(recipeData),
     })
       .then((response) => {
