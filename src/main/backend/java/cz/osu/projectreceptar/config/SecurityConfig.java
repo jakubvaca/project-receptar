@@ -16,6 +16,7 @@ import org.springframework.security.web.context.HttpSessionSecurityContextReposi
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import org.springframework.security.config.Customizer;
 
 @Configuration
 @RequiredArgsConstructor
@@ -43,6 +44,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+            .cors(Customizer.withDefaults()) // Zapne CORS konfiguraci ze Spring MVC i na úrovni Spring Security
             .csrf(csrf -> csrf
                 .ignoringRequestMatchers("/api/auth/login", "/api/auth/register") // Ignorujeme CSRF u přihlášení a registrace
                 .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
