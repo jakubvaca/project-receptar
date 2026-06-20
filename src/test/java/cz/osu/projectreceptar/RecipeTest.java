@@ -25,6 +25,11 @@ import static org.mockito.ArgumentMatchers.any;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import cz.osu.projectreceptar.model.dto.PageResponseDto;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -105,14 +110,17 @@ class RecipeServiceTest {
         recipe.setAuthor(author);
         recipe.setRecipeIngredients(Collections.emptyList());
 
-        when(recipeRepository.findAllWithDetails()).thenReturn(List.of(recipe));
+        Page<Recipe> page = new PageImpl<>(List.of(recipe));
+        when(recipeRepository.findAllWithAuthor(any(Pageable.class))).thenReturn(page);
 
         // Act
-        List<RecipeResponseDto> results = recipeService.getAllRecipes();
+        PageResponseDto<RecipeResponseDto> resultPage = recipeService.getAllRecipes(0, 6);
+        List<RecipeResponseDto> results = resultPage.getContent();
 
         // Assert
         assertFalse(results.isEmpty());
         assertEquals("Gulaš", results.get(0).getTitle());
         assertEquals("petr", results.get(0).getAuthorName());
+        assertEquals(1, resultPage.getTotalElements());
     }
 }

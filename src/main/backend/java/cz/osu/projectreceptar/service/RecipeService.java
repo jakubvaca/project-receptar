@@ -9,10 +9,15 @@ import cz.osu.projectreceptar.model.entity.RecipeIngredient;
 import cz.osu.projectreceptar.model.entity.User;
 import cz.osu.projectreceptar.model.repository.IngredientRepository;
 import cz.osu.projectreceptar.model.repository.RecipeIngredientRepository;
+import cz.osu.projectreceptar.model.dto.PageResponseDto;
 import cz.osu.projectreceptar.model.repository.RecipeRepository;
 import cz.osu.projectreceptar.model.repository.UserRepository;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -122,17 +127,18 @@ public class RecipeService {
         }
 
         @Transactional(readOnly = true)
-        public List<RecipeResponseDto> getAllRecipes(){
-            List<Recipe> recipes = recipeRepository.findAllWithDetails();
+        public PageResponseDto<RecipeResponseDto> getAllRecipes(int pageNo, int pageSize){
+            Pageable pageable = PageRequest.of(pageNo, pageSize, Sort.by("id").descending());
+            Page<Recipe> recipes = recipeRepository.findAllWithAuthor(pageable);
 
-            return recipes.stream().map(recipe -> {
+            List<RecipeResponseDto> content = recipes.stream().map(recipe -> {
                 RecipeResponseDto dto = new RecipeResponseDto();
                 dto.setId(recipe.getId());
                 dto.setTitle(recipe.getTitle());
                 dto.setInstructions(recipe.getInstructions());
                 dto.setAuthorName(recipe.getAuthor().getUsername());
 
-                // Přemapujeme i seznam surovin
+                // Přemapujeme i seznam surovin (Suroviny se vytáhnou díky batch-fetchingu bez N+1)
                 List<IngredientDto> ingredientDtos = recipe.getRecipeIngredients().stream().map(ri -> {
                     IngredientDto iDto = new IngredientDto();
                     iDto.setName(ri.getIngredient().getName());
@@ -144,5 +150,14 @@ public class RecipeService {
                 dto.setIngredients(ingredientDtos);
                 return dto;
             }).toList();
+
+            return new PageResponseDto<>(
+                    content,
+                    recipes.getNumber(),
+                    recipes.getSize(),
+                    recipes.getTotalElements(),
+                    recipes.getTotalPages(),
+                    recipes.isLast()
+            );
     }
 }
