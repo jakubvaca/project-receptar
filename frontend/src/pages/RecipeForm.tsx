@@ -1,8 +1,11 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import type { Recipe } from '../types';
 
 export default function RecipeForm() {
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+  const isEditing = Boolean(id);
 
   // Základní stavy
   const [title, setTitle] = useState('');
@@ -16,6 +19,29 @@ export default function RecipeForm() {
   // Stavy pro odesílání a chyby
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Načtení dat při editaci
+  useEffect(() => {
+    if (isEditing) {
+      fetch('http://localhost:8080/api/recipes') // Pro jednoduchost načteme všechny a vyfiltrujeme, optimální by byl endpoint GET /api/recipes/{id}
+        .then(res => res.json())
+        .then((data: Recipe[]) => {
+          const recipe = data.find(r => r.id === Number(id));
+          if (recipe) {
+            setTitle(recipe.title);
+            setInstructions(recipe.instructions);
+            if (recipe.ingredients && recipe.ingredients.length > 0) {
+              setIngredients(recipe.ingredients.map(ing => ({
+                name: ing.name,
+                amount: ing.amount,
+                unit: ing.unit
+              })));
+            }
+          }
+        })
+        .catch(err => console.error("Chyba při načítání receptu", err));
+    }
+  }, [id, isEditing]);
 
   // Přidání nového řádku pro surovinu
   const handleAddIngredient = () => {
@@ -87,9 +113,12 @@ export default function RecipeForm() {
       headers['X-XSRF-TOKEN'] = csrfToken;
     }
 
+    const endpoint = isEditing ? `http://localhost:8080/api/recipes/${id}` : 'http://localhost:8080/api/recipes';
+    const httpMethod = isEditing ? 'PUT' : 'POST';
+
     // 4. Odeslání na server
-    fetch('http://localhost:8080/api/recipes', {
-      method: 'POST',
+    fetch(endpoint, {
+      method: httpMethod,
       credentials: 'include', // Velmi důležité pro odeslání přihlašovací Cookie a čtení CSRF Cookie
       headers: headers,
       body: JSON.stringify(recipeData),
@@ -97,7 +126,7 @@ export default function RecipeForm() {
       .then((response) => {
         if (!response.ok) {
             if (response.status === 401 || response.status === 403) {
-                throw new Error('Nemáte oprávnění přidat recept. Vaše přihlášení pravděpodobně vypršelo.');
+                throw new Error('Nemáte oprávnění. Vaše přihlášení pravděpodobně vypršelo, nebo nejste autorem receptu.');
             }
             throw new Error('Chyba při ukládání receptu na server.');
         }
@@ -112,7 +141,9 @@ export default function RecipeForm() {
 
   return (
     <div className="max-w-2xl mx-auto p-6 bg-white rounded-xl shadow-md border border-gray-100">
-      <h1 className="text-3xl font-bold text-gray-800 mb-6 border-b pb-4">Vytvořit nový recept</h1>
+      <h1 className="text-3xl font-bold text-gray-800 mb-6 border-b pb-4">
+        {isEditing ? 'Upravit recept' : 'Vytvořit nový recept'}
+      </h1>
       
       {error && <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">{error}</div>}
 
@@ -203,7 +234,7 @@ export default function RecipeForm() {
           disabled={isSubmitting}
           className="w-full bg-orange-500 text-white font-bold py-3 rounded-lg hover:bg-orange-600 transition disabled:bg-gray-400"
         >
-          {isSubmitting ? 'Ukládám...' : 'Uložit recept'}
+          {isSubmitting ? 'Ukládám...' : (isEditing ? 'Aktualizovat recept' : 'Uložit recept')}
         </button>
       </form>
     </div>

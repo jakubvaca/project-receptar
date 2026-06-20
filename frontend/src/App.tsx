@@ -17,6 +17,7 @@ function App() {
           <Routes>
             <Route path="/" element={<RecipeList />} />
             <Route path="/create" element={<RecipeForm />} />
+            <Route path="/edit/:id" element={<RecipeForm />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} /> {/* <-- Nová cesta pro registraci */}
           </Routes>

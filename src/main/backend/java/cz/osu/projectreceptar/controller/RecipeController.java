@@ -32,4 +32,16 @@ public class RecipeController {
         return ResponseEntity.ok(recipes);
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<String> updateRecipe(@PathVariable Long id, @Valid @RequestBody RecipeCreateDto dto) {
+        recipeService.updateRecipe(id, dto);
+        return ResponseEntity.ok("Recept úspěšně aktualizován.");
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteRecipe(@PathVariable Long id) {
+        recipeService.deleteRecipe(id);
+        return ResponseEntity.ok("Recept úspěšně smazán.");
+    }
+
 }
