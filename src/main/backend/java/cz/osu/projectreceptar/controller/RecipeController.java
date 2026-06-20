@@ -1,5 +1,6 @@
 package cz.osu.projectreceptar.controller;
 
+import cz.osu.projectreceptar.model.dto.PageResponseDto;
 import cz.osu.projectreceptar.model.dto.RecipeCreateDto;
 import cz.osu.projectreceptar.model.dto.RecipeResponseDto;
 import cz.osu.projectreceptar.model.entity.Recipe;
@@ -9,8 +10,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/recipes")
@@ -27,8 +26,10 @@ public class RecipeController {
     }
 
     @GetMapping
-    public ResponseEntity<List<RecipeResponseDto>> getAllRecipes() {
-        List<RecipeResponseDto> recipes = recipeService.getAllRecipes();
+    public ResponseEntity<PageResponseDto<RecipeResponseDto>> getAllRecipes(
+            @RequestParam(value = "page", defaultValue = "0", required = false) int page,
+            @RequestParam(value = "size", defaultValue = "6", required = false) int size) {
+        PageResponseDto<RecipeResponseDto> recipes = recipeService.getAllRecipes(page, size);
         return ResponseEntity.ok(recipes);
     }
 
