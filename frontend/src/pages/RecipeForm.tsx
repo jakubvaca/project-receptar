@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { Plus, X } from 'lucide-react';
 import type { Recipe } from '../types';
 
 export default function RecipeForm() {
@@ -16,18 +17,17 @@ export default function RecipeForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Načtení dat při editaci
   useEffect(() => {
     if (isEditing) {
-      fetch('http://localhost:8080/api/recipes') // Pro jednoduchost načteme všechny a vyfiltrujeme, optimální by byl endpoint GET /api/recipes/{id}
+      fetch('http://localhost:8080/api/recipes')
         .then(res => res.json())
-        .then((data: Recipe[]) => {
-          const recipe = data.find(r => r.id === Number(id));
+        .then((data: any) => {
+          const recipe = (data.content || data).find((r: Recipe) => r.id === Number(id));
           if (recipe) {
             setTitle(recipe.title);
             setInstructions(recipe.instructions);
             if (recipe.ingredients && recipe.ingredients.length > 0) {
-              setIngredients(recipe.ingredients.map(ing => ({
+              setIngredients(recipe.ingredients.map((ing: any) => ({
                 name: ing.name,
                 amount: ing.amount,
                 unit: ing.unit
@@ -39,7 +39,6 @@ export default function RecipeForm() {
     }
   }, [id, isEditing]);
 
-  // Přidání nového řádku pro surovinu
   const handleAddIngredient = () => {
     setIngredients([...ingredients, { name: '', amount: 0, unit: '' }]);
   };
@@ -74,8 +73,6 @@ export default function RecipeForm() {
       return;
     }
 
-    // 2. Příprava dat podle struktury backendového DTO
-    // Odebíráme authorId, to si vyřeší backend sám ze session (SecurityContext)
     const recipeData = {
       title: title,
       instructions: instructions,
@@ -86,7 +83,6 @@ export default function RecipeForm() {
       }))
     };
 
-    // 3. Získání CSRF tokenu z cookies
     const getCsrfToken = () => {
       const match = document.cookie.match(new RegExp('(^| )XSRF-TOKEN=([^;]+)'));
       return match ? match[2] : null;
@@ -97,7 +93,6 @@ export default function RecipeForm() {
       'Content-Type': 'application/json'
     };
 
-    // Přidáme CSRF token do hlaviček, pokud existuje
     if (csrfToken) {
       headers['X-XSRF-TOKEN'] = csrfToken;
     }
@@ -105,10 +100,9 @@ export default function RecipeForm() {
     const endpoint = isEditing ? `http://localhost:8080/api/recipes/${id}` : 'http://localhost:8080/api/recipes';
     const httpMethod = isEditing ? 'PUT' : 'POST';
 
-    // 4. Odeslání na server
     fetch(endpoint, {
       method: httpMethod,
-      credentials: 'include', // Velmi důležité pro odeslání přihlašovací Cookie a čtení CSRF Cookie
+      credentials: 'include',
       headers: headers,
       body: JSON.stringify(recipeData),
     })
@@ -128,8 +122,8 @@ export default function RecipeForm() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-6 bg-white rounded-xl shadow-md border border-gray-100">
-      <h1 className="text-3xl font-bold text-gray-800 mb-6 border-b pb-4">
+    <div className="max-w-3xl mx-auto bg-white rounded-[2rem] p-8 sm:p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-[#F0EBE1] mt-8">
+      <h1 className="text-3xl sm:text-4xl font-bold text-[#2D2422] mb-8 tracking-tight">
         {isEditing ? 'Upravit recept' : 'Vytvořit nový recept'}
       </h1>
       
@@ -215,14 +209,15 @@ export default function RecipeForm() {
           />
         </div>
 
-        {/* Tlačítko na odeslání */}
-        <button 
-          type="submit" 
-          disabled={isSubmitting}
-          className="w-full bg-orange-500 text-white font-bold py-3 rounded-lg hover:bg-orange-600 transition disabled:bg-gray-400"
-        >
-          {isSubmitting ? 'Ukládám...' : (isEditing ? 'Aktualizovat recept' : 'Uložit recept')}
-        </button>
+        <div className="pt-6">
+            <button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full bg-orange-500 text-white font-bold text-lg py-4 rounded-xl hover:bg-orange-600 transition-colors disabled:bg-gray-300 shadow-sm"
+            >
+            {isSubmitting ? 'Ukládám...' : (isEditing ? 'Aktualizovat recept' : 'Publikovat recept')}
+            </button>
+        </div>
       </form>
     </div>
   );
