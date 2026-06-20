@@ -8,12 +8,10 @@ import Register from './pages/Register'; // <-- Přidaný import registrace
 function App() {
   return (
     <BrowserRouter>
-      {/* min-h-screen roztáhne šedé pozadí až úplně dolů */}
-      <div className="min-h-screen bg-slate-50"> 
+      <div className="min-h-screen bg-[#FFFDF9] font-sans text-[#3A3331] pb-24">
         <Navbar />
         
-        {/* container zabrání tomu, aby byl text nalepený na okrajích monitoru */}
-        <main className="container mx-auto py-8 px-4">
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12">
           <Routes>
             <Route path="/" element={<RecipeList />} />
             <Route path="/create" element={<RecipeForm />} />

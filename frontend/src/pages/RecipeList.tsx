@@ -34,10 +34,47 @@ export default function RecipeList() {
     setSearchParams({ page: newPage.toString() });
   };
 
-  // Co se má zobrazit, když se na data čeká
-  if (loading) {
-    return <div className="p-8 text-center text-gray-500 text-xl">Načítám recepty z databáze...</div>;
-  }
+  const handlePageChange = (newPage: number) => {
+    setSearchParams({ page: newPage.toString() });
+  };
+
+  const getCsrfToken = () => {
+    const match = document.cookie.match(new RegExp('(^| )XSRF-TOKEN=([^;]+)'));
+    return match ? match[2] : null;
+  };
+
+  const handleDelete = (id: number) => {
+    if (!window.confirm('Opravdu chcete tento recept smazat?')) return;
+
+    const csrfToken = getCsrfToken();
+    const headers: HeadersInit = {};
+    if (csrfToken) {
+      headers['X-XSRF-TOKEN'] = csrfToken;
+    }
+
+    fetch(`http://localhost:8080/api/recipes/${id}`, {
+      method: 'DELETE',
+      credentials: 'include',
+      headers: headers
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error('Nepodařilo se smazat recept. Možná nejste autorem.');
+        }
+        if (pageData) {
+            setPageData({
+                ...pageData,
+                content: pageData.content.filter((r) => r.id !== id)
+            });
+        }
+      })
+      .catch((err) => {
+        alert(err.message);
+      });
+  };
+
+  const currentUser = localStorage.getItem('loggedUser') ? JSON.parse(localStorage.getItem('loggedUser') as string) : null;
+  const recipes = pageData?.content || [];
 
   // Pomocná funkce pro získání CSRF tokenu
   const getCsrfToken = () => {
@@ -86,20 +123,57 @@ export default function RecipeList() {
 
   // Hlavní vykreslení, když data úspěšně dorazí
   return (
-    <div className="p-4">
-      <h1 className="text-3xl font-bold text-gray-800 mb-8 border-b pb-4">Všechny recepty</h1>
-      
-      {recipes.length === 0 ? (
-        <p className="text-gray-600 text-lg">Zatím tu nejsou žádné recepty. Běž nějaký přidat!</p>
+    <>
+      {/* Hero Section */}
+      <div className="max-w-3xl mx-auto text-center mb-16 mt-4">
+        <h1 className="text-4xl sm:text-5xl font-bold mb-6 text-[#2D2422] tracking-tight">Co dobrého dnes uvaříte?</h1>
+
+        <div className="relative bg-white shadow-[0_4px_20px_rgb(0,0,0,0.03)] rounded-full p-2 border border-[#F0EBE1] flex items-center mb-6 focus-within:ring-2 focus-within:ring-orange-200 transition-all">
+          <Search className="text-[#A39B95] ml-4" size={20} />
+          <input
+            type="text"
+            placeholder="Najděte recept, ingredienci nebo autora..."
+            className="flex-1 bg-transparent border-none px-4 py-3 focus:outline-none text-[#3A3331] text-lg placeholder:text-[#A39B95]"
+          />
+          <button className="bg-orange-500 hover:bg-orange-600 text-white font-medium px-6 py-3 rounded-full transition-colors">
+            Hledat
+          </button>
+        </div>
+
+        <div className="flex flex-wrap justify-center gap-3">
+          <button className="flex items-center gap-1.5 bg-white border border-[#F0EBE1] text-[#5C534D] px-4 py-2 rounded-full text-sm font-medium hover:border-orange-300 hover:text-orange-600 shadow-sm transition-colors">
+            <Clock size={16} /> Rychlovky do 30 min
+          </button>
+          <button className="flex items-center gap-1.5 bg-white border border-[#F0EBE1] text-[#5C534D] px-4 py-2 rounded-full text-sm font-medium hover:border-orange-300 hover:text-orange-600 shadow-sm transition-colors">
+            <Heart size={16} /> Nejoblíbenější
+          </button>
+        </div>
+      </div>
+
+      {/* Grid Header */}
+      <div className="flex justify-between items-end mb-8">
+        <div>
+          <h2 className="text-2xl font-bold text-[#2D2422] mb-1">Právě uvařeno v komunitě</h2>
+          <p className="text-[#7A726C] text-sm">Nejnovější recepty od ostatních kuchařů</p>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="p-12 text-center text-[#7A726C] text-xl font-medium">Načítám recepty...</div>
+      ) : recipes.length === 0 ? (
+        <div className="p-12 text-center text-[#7A726C] text-lg">Zatím tu nejsou žádné recepty. Běž nějaký přidat!</div>
       ) : (
         <>
         {/* Grid rozdělí karty receptů do sloupců podle velikosti obrazovky */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-10">
           {recipes.map((recipe) => (
-            // Každá karta s receptem
-            <div key={recipe.id} className="bg-white p-6 rounded-xl shadow-md border border-gray-100 hover:shadow-lg transition">
-              <h2 className="text-2xl font-bold text-orange-600 mb-2">{recipe.title}</h2>
-              <p className="text-sm text-gray-400 mb-4 font-medium uppercase tracking-wider">Od: {recipe.authorName}</p>
+            <div key={recipe.id} className="bg-white rounded-2xl border border-[#F0EBE1] overflow-hidden group hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all flex flex-col">
+              <div className="aspect-[4/3] relative overflow-hidden">
+                <img src={getFallbackImage(recipe.id)} alt={recipe.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <button className="absolute top-3 right-3 p-2 bg-white/80 backdrop-blur-sm text-[#5C534D] rounded-full hover:bg-white hover:text-orange-500 transition-colors shadow-sm opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0">
+                  <Bookmark size={18} />
+                </button>
+              </div>
               
               <h3 className="font-semibold text-gray-700 mb-2 border-b pb-1">Suroviny:</h3>
               <ul className="list-disc list-inside mb-4 text-gray-600 text-sm">
@@ -171,6 +245,6 @@ export default function RecipeList() {
         )}
         </>
       )}
-    </div>
+    </>
   );
 }
