@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import type { Recipe } from '../types';
 
 export default function RecipeList() {
@@ -31,6 +32,39 @@ export default function RecipeList() {
     return <div className="p-8 text-center text-gray-500 text-xl">Načítám recepty z databáze...</div>;
   }
 
+  // Pomocná funkce pro získání CSRF tokenu
+  const getCsrfToken = () => {
+    const match = document.cookie.match(new RegExp('(^| )XSRF-TOKEN=([^;]+)'));
+    return match ? match[2] : null;
+  };
+
+  const handleDelete = (id: number) => {
+    if (!window.confirm('Opravdu chcete tento recept smazat?')) return;
+
+    const csrfToken = getCsrfToken();
+    const headers: HeadersInit = {};
+    if (csrfToken) {
+      headers['X-XSRF-TOKEN'] = csrfToken;
+    }
+
+    fetch(`http://localhost:8080/api/recipes/${id}`, {
+      method: 'DELETE',
+      credentials: 'include',
+      headers: headers
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error('Nepodařilo se smazat recept. Možná nejste autorem.');
+        }
+        setRecipes(recipes.filter((r) => r.id !== id));
+      })
+      .catch((err) => {
+        alert(err.message);
+      });
+  };
+
+  const currentUser = localStorage.getItem('loggedUser') ? JSON.parse(localStorage.getItem('loggedUser') as string) : null;
+
   // Co se má zobrazit, když spadne spojení
   if (error) {
     return <div className="p-8 text-center text-red-500 font-bold text-xl">Chyba: {error}</div>;
@@ -62,7 +96,24 @@ export default function RecipeList() {
               </ul>
               
               <h3 className="font-semibold text-gray-700 mb-2 border-b pb-1">Postup:</h3>
-              <p className="text-gray-600 text-sm">{recipe.instructions}</p>
+              <p className="text-gray-600 text-sm mb-4">{recipe.instructions}</p>
+
+              {currentUser && currentUser.username === recipe.authorName && (
+                <div className="flex gap-2 mt-4 pt-4 border-t border-gray-100">
+                  <Link
+                    to={`/edit/${recipe.id}`}
+                    className="flex-1 text-center bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded transition"
+                  >
+                    Upravit
+                  </Link>
+                  <button
+                    onClick={() => handleDelete(recipe.id)}
+                    className="flex-1 bg-red-100 hover:bg-red-200 text-red-600 font-bold py-2 px-4 rounded transition"
+                  >
+                    Smazat
+                  </button>
+                </div>
+              )}
             </div>
           ))}
         </div>

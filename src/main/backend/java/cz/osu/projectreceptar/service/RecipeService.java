@@ -66,6 +66,61 @@ public class RecipeService {
         return savedRecipe;
     }
 
+        @Transactional
+        public Recipe updateRecipe(Long id, RecipeCreateDto dto) {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String currentUsername = authentication.getName();
+
+            Recipe existingRecipe = recipeRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Recept nebyl nalezen."));
+
+            if (!existingRecipe.getAuthor().getUsername().equals(currentUsername)) {
+                throw new RuntimeException("Nemáte oprávnění upravovat tento recept. Nejste jeho autorem.");
+            }
+
+            existingRecipe.setTitle(dto.getTitle());
+            existingRecipe.setInstructions(dto.getInstructions());
+
+            // Odstranění původních surovin
+            recipeIngredientRepository.deleteAll(existingRecipe.getRecipeIngredients());
+            existingRecipe.getRecipeIngredients().clear();
+
+            // Vytvoření nových surovin
+            for (IngredientDto ingDto : dto.getIngredients()) {
+                Ingredient ingredient = ingredientRepository.findByNameIgnoreCase(ingDto.getName())
+                        .orElseGet(() -> {
+                            Ingredient newIngredient = new Ingredient();
+                            newIngredient.setName(ingDto.getName());
+                            return ingredientRepository.save(newIngredient);
+                        });
+
+                RecipeIngredient recipeIngredient = new RecipeIngredient();
+                recipeIngredient.setRecipe(existingRecipe);
+                recipeIngredient.setIngredient(ingredient);
+                recipeIngredient.setAmount(ingDto.getAmount());
+                recipeIngredient.setUnit(ingDto.getUnit());
+
+                existingRecipe.getRecipeIngredients().add(recipeIngredient);
+            }
+
+            return recipeRepository.save(existingRecipe);
+        }
+
+        @Transactional
+        public void deleteRecipe(Long id) {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String currentUsername = authentication.getName();
+
+            Recipe existingRecipe = recipeRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Recept nebyl nalezen."));
+
+            if (!existingRecipe.getAuthor().getUsername().equals(currentUsername)) {
+                throw new RuntimeException("Nemáte oprávnění smazat tento recept. Nejste jeho autorem.");
+            }
+
+            recipeRepository.delete(existingRecipe);
+        }
+
         @Transactional(readOnly = true)
         public List<RecipeResponseDto> getAllRecipes(){
             List<Recipe> recipes = recipeRepository.findAllWithDetails();
