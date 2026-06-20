@@ -145,7 +145,7 @@ export default function RecipeList() {
               <div className="p-5 flex flex-col flex-1">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-xs font-bold text-orange-600 uppercase tracking-wider">
-                    {recipe.ingredients.length} surovin
+                    {recipe.ingredients.length === 1 ? `${recipe.ingredients.length} surovina` : recipe.ingredients.length > 1 && recipe.ingredients.length < 5 ? `${recipe.ingredients.length} suroviny` : `${recipe.ingredients.length} surovin`}
                   </span>
                   <div className="flex items-center gap-1 text-xs font-semibold text-[#5C534D]">
                     <Star size={14} className="text-yellow-500 fill-yellow-500" /> {(4 + (recipe.id % 10) * 0.1).toFixed(1)}
