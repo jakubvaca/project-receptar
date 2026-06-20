@@ -6,6 +6,8 @@ import cz.osu.projectreceptar.model.entity.User;
 import cz.osu.projectreceptar.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -17,20 +19,20 @@ public class AuthController {
     private final UserService userService;
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequestDto loginRequestDto) {
+    public ResponseEntity<?> login(@RequestBody LoginRequestDto loginRequestDto, HttpServletRequest request, HttpServletResponse response) {
         try {
-            AuthResponseDto response = userService.login(loginRequestDto);
-            return ResponseEntity.ok(response);
+            AuthResponseDto authResponse = userService.login(loginRequestDto, request, response);
+            return ResponseEntity.ok(authResponse);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody User user) {
+    public ResponseEntity<?> register(@RequestBody User user, HttpServletRequest request, HttpServletResponse response) {
         try {
-            AuthResponseDto response = userService.register(user);
-            return ResponseEntity.ok(response);
+            AuthResponseDto authResponse = userService.register(user, request, response);
+            return ResponseEntity.ok(authResponse);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }

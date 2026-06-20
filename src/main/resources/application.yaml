@@ -2,10 +2,15 @@ spring:
   application:
     name: project-receptar
   datasource:
-    url: jdbc:postgresql://ep-crimson-pine-amb9pxc2.c-5.us-east-1.aws.neon.tech/neondb?sslmode=require
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
+    url: ${DB_URL:jdbc:postgresql://ep-crimson-pine-amb9pxc2.c-5.us-east-1.aws.neon.tech/neondb?sslmode=require}
+    username: ${DB_USERNAME:sa}
+    password: ${DB_PASSWORD:password}
     driver-class-name: org.postgresql.Driver
+logging:
+  level:
+    org.springframework.security: DEBUG
+
+spring:
   jpa:
     hibernate:
       ddl-auto: update
@@ -14,3 +19,4 @@ spring:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
+        default_batch_fetch_size: 100

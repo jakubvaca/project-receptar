@@ -22,6 +22,14 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import cz.osu.projectreceptar.model.dto.PageResponseDto;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -42,13 +50,12 @@ class RecipeServiceTest {
     @Test
     void createRecipe_ShouldSuccess() {
         // Arrange
-        Long authorId = 1L;
+        String authorUsername = "petr";
         User author = new User();
-        author.setId(authorId);
-        author.setUsername("petr");
+        author.setId(1L);
+        author.setUsername(authorUsername);
 
         RecipeCreateDto dto = new RecipeCreateDto();
-        dto.setAuthorId(authorId);
         dto.setTitle("Test recept");
         dto.setIngredients(Collections.emptyList());
 
@@ -56,7 +63,13 @@ class RecipeServiceTest {
         savedRecipe.setId(10L);
         savedRecipe.setTitle("Test recept");
 
-        when(userRepository.findById(authorId)).thenReturn(Optional.of(author));
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.getName()).thenReturn(authorUsername);
+        SecurityContext securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+
+        when(userRepository.findByUsername(authorUsername)).thenReturn(Optional.of(author));
         when(recipeRepository.save(any(Recipe.class))).thenReturn(savedRecipe);
 
         // Act
@@ -72,9 +85,14 @@ class RecipeServiceTest {
     void createRecipe_ShouldThrowException_WhenAuthorNotFound() {
         // Arrange
         RecipeCreateDto dto = new RecipeCreateDto();
-        dto.setAuthorId(999L);
 
-        when(userRepository.findById(999L)).thenReturn(Optional.empty());
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.getName()).thenReturn("unknownUser");
+        SecurityContext securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+
+        when(userRepository.findByUsername("unknownUser")).thenReturn(Optional.empty());
 
         // Act & Assert
         assertThrows(RuntimeException.class, () -> recipeService.createRecipe(dto));
@@ -92,14 +110,17 @@ class RecipeServiceTest {
         recipe.setAuthor(author);
         recipe.setRecipeIngredients(Collections.emptyList());
 
-        when(recipeRepository.findAll()).thenReturn(List.of(recipe));
+        Page<Recipe> page = new PageImpl<>(List.of(recipe));
+        when(recipeRepository.findAllWithAuthor(any(Pageable.class))).thenReturn(page);
 
         // Act
-        List<RecipeResponseDto> results = recipeService.getAllRecipes();
+        PageResponseDto<RecipeResponseDto> resultPage = recipeService.getAllRecipes(0, 6);
+        List<RecipeResponseDto> results = resultPage.getContent();
 
         // Assert
         assertFalse(results.isEmpty());
         assertEquals("Gulaš", results.get(0).getTitle());
         assertEquals("petr", results.get(0).getAuthorName());
+        assertEquals(1, resultPage.getTotalElements());
     }
 }
